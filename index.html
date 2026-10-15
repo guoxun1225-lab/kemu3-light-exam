@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>科目三灯光模拟考试</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231a1f2e'/%3E%3Ccircle cx='32' cy='32' r='16' fill='%23ffd700'/%3E%3Ccircle cx='32' cy='32' r='8' fill='%23ff8c00'/%3E%3C/svg%3E">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: linear-gradient(135deg, #0a0e1a 0%, #1a1f2e 50%, #0d1117 100%);
+    min-height: 100vh;
+    color: #e8eaf0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .container {
+    width: 100%;
+    max-width: 680px;
+    background: rgba(20, 25, 40, 0.85);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    overflow: hidden;
+  }
+  .header {
+    background: linear-gradient(135deg, #1e3a5f 0%, #0f1e35 100%);
+    padding: 28px 32px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    position: relative;
+  }
+  .header::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #ffd700, transparent);
+  }
+  .header h1 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+  }
+  .header p {
+    font-size: 13px;
+    color: #8fa3bf;
+    letter-spacing: 1px;
+  }
+  .body { padding: 32px; }
+  .start-view { text-align: center; }
+  .start-icon {
+    width: 80px; height: 80px;
+    margin: 0 auto 24px;
+    background: radial-gradient(circle, #ffd700 0%, #ff8c00 60%, transparent 70%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: glow 2s ease-in-out infinite alternate;
+  }
+  @keyframes glow {
+    from { box-shadow: 0 0 20px rgba(255, 215, 0, 0.4); }
+    to { box-shadow: 0 0 40px rgba(255, 215, 0, 0.8); }
+  }
+  .start-icon svg { width: 40px; height: 40px; fill: #1a1f2e; }
+  .start-desc {
+    font-size: 15px;
+    color: #a0b0c8;
+    line-height: 1.8;
+    margin-bottom: 28px;
+  }
+  .mode-select { margin-bottom: 28px; }
+  .mode-label {
+    font-size: 14px;
+    color: #8fa3bf;
+    margin-bottom: 14px;
+    text-align: left;
+  }
+  .mode-btns {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  .mode-btn {
+    padding: 16px 12px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    color: #c8d4e8;
+    cursor: pointer;
+    transition: all 0.25s;
+    font-size: 14px;
+  }
+  .mode-btn:hover {
+    border-color: rgba(255, 215, 0, 0.4);
+    background: rgba(255, 215, 0, 0.06);
+  }
+  .mode-btn.active {
+    border-color: #ffd700;
+    background: rgba(255, 215, 0, 0.12);
+    color: #ffd700;
+    font-weight: 600;
+  }
+  .mode-btn .num {
+    display: block;
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .voice-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    margin-bottom: 20px;
+    cursor: pointer;
+    transition: all 0.25s;
+    user-select: none;
+  }
+  .voice-toggle:hover {
+    border-color: rgba(255, 215, 0, 0.3);
+    background: rgba(255, 215, 0, 0.04);
+  }
+  .voice-toggle-label {
+    font-size: 14px;
+    color: #c8d4e8;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .voice-switch {
+    width: 48px;
+    height: 26px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 13px;
+    position: relative;
+    transition: background 0.25s;
+    flex-shrink: 0;
+  }
+  .voice-switch::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 20px;
+    height: 20px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform 0.25s;
+  }
+  .voice-toggle.active .voice-switch {
+    background: #ffd700;
+  }
+  .voice-toggle.active .voice-switch::after {
+    transform: translateX(22px);
+  }
+  .primary-btn {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, #ffd700 0%, #ffaa00 100%);
+    border: none;
+    border-radius: 12px;
+    color: #1a1f2e;
+    font-size: 17px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 2px;
+    transition: all 0.25s;
+  }
+  .primary-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(255, 215, 0, 0.35);
+  }
+  .primary-btn:active { transform: translateY(0); }
+  .quiz-view { display: none; }
+  .progress-bar {
+    display: flex;
+    align-items: center;
+    margin-bottom: 24px;
+    gap: 12px;
+  }
+  .progress-text {
+    font-size: 14px;
+    color: #8fa3bf;
+    white-space: nowrap;
+  }
+  .progress-text b { color: #ffd700; font-size: 16px; }
+  .progress-track {
+    flex: 1;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ffd700, #ff8c00);
+    border-radius: 4px;
+    transition: width 0.4s ease;
+    width: 0%;
+  }
+  .score-badge {
+    font-size: 13px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    background: rgba(255, 215, 0, 0.12);
+    color: #ffd700;
+    font-weight: 600;
+  }
+  .question-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 28px 24px;
+    margin-bottom: 24px;
+    text-align: center;
+    position: relative;
+  }
+  .question-tag {
+    display: inline-block;
+    padding: 4px 14px;
+    background: rgba(255, 215, 0, 0.15);
+    color: #ffd700;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    letter-spacing: 1px;
+  }
+  .countdown-badge {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: rgba(255, 215, 0, 0.12);
+    border: 2px solid #ffd700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: 700;
+    color: #ffd700;
+    transition: all 0.3s;
+  }
+  .countdown-badge.urgent {
+    border-color: #ff5252;
+    color: #ff5252;
+    background: rgba(255, 82, 82, 0.12);
+    animation: pulse 0.5s ease infinite alternate;
+  }
+  @keyframes pulse {
+    from { transform: scale(1); }
+    to { transform: scale(1.12); }
+  }
+  .question-text {
+    font-size: 20px;
+    font-weight: 600;
+    color: #fff;
+    line-height: 1.6;
+    letter-spacing: 1px;
+  }
+  .options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .option-btn {
+    padding: 20px 16px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    color: #c8d4e8;
+    cursor: pointer;
+    transition: all 0.25s;
+    font-size: 15px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 72px;
+  }
+  .option-btn:hover:not(:disabled) {
+    border-color: rgba(255, 215, 0, 0.5);
+    background: rgba(255, 215, 0, 0.06);
+    transform: translateY(-2px);
+  }
+  .option-btn:disabled { cursor: default; }
+  .option-btn .opt-icon {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .option-btn.correct {
+    border-color: #00e676;
+    background: rgba(0, 230, 118, 0.12);
+    color: #00e676;
+  }
+  .option-btn.wrong {
+    border-color: #ff5252;
+    background: rgba(255, 82, 82, 0.12);
+    color: #ff5252;
+  }
+  .option-btn.dimmed { opacity: 0.4; }
+  .feedback {
+    padding: 16px 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    display: none;
+    animation: slideIn 0.3s ease;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .feedback.show { display: block; }
+  .feedback.correct {
+    background: rgba(0, 230, 118, 0.1);
+    border: 1px solid rgba(0, 230, 118, 0.3);
+    color: #69f0ae;
+  }
+  .feedback.wrong {
+    background: rgba(255, 82, 82, 0.1);
+    border: 1px solid rgba(255, 82, 82, 0.3);
+    color: #ff8a80;
+  }
+  .feedback-title {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .feedback-answer {
+    font-size: 13px;
+    opacity: 0.9;
+    line-height: 1.6;
+  }
+  .next-btn {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(135deg, #2196f3 0%, #1565c0 100%);
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 1px;
+    display: none;
+    transition: all 0.25s;
+  }
+  .next-btn.show { display: block; }
+  .next-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(33, 150, 243, 0.35);
+  }
+  .result-view { display: none; text-align: center; }
+  .result-score {
+    font-size: 72px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #ffd700, #ff8c00);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+    margin: 10px 0;
+  }
+  .result-label {
+    font-size: 14px;
+    color: #8fa3bf;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+  }
+  .result-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin: 28px 0;
+  }
+  .stat-card {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 18px 10px;
+  }
+  .stat-num {
+    font-size: 26px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .stat-num.green { color: #00e676; }
+  .stat-num.red { color: #ff5252; }
+  .stat-num.blue { color: #64b5f6; }
+  .stat-label { font-size: 12px; color: #8fa3bf; }
+  .result-msg {
+    font-size: 16px;
+    color: #c8d4e8;
+    margin-bottom: 24px;
+    line-height: 1.7;
+  }
+  .wrong-list {
+    text-align: left;
+    margin-bottom: 24px;
+    display: none;
+  }
+  .wrong-list.show { display: block; }
+  .wrong-list-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #ff8a80;
+    margin-bottom: 14px;
+    padding-left: 10px;
+    border-left: 3px solid #ff5252;
+  }
+  .wrong-item {
+    background: rgba(255, 82, 82, 0.06);
+    border: 1px solid rgba(255, 82, 82, 0.15);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+  .wrong-q {
+    font-size: 14px;
+    color: #e8eaf0;
+    margin-bottom: 8px;
+    font-weight: 500;
+  }
+  .wrong-ans {
+    font-size: 13px;
+    color: #8fa3bf;
+    line-height: 1.6;
+  }
+  .wrong-ans span { color: #00e676; font-weight: 600; }
+  .wrong-ans .user-ans { color: #ff8a80; }
+  .result-btns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .result-btns .primary-btn { font-size: 15px; }
+  .result-btns .secondary-btn {
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    color: #c8d4e8;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s;
+  }
+  .result-btns .secondary-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.25);
+  }
+  @media (max-width: 520px) {
+    .body { padding: 20px; }
+    .header { padding: 20px; }
+    .header h1 { font-size: 20px; }
+    .options { grid-template-columns: 1fr; }
+    .mode-btns { grid-template-columns: 1fr; }
+    .question-text { font-size: 17px; }
+    .result-score { font-size: 56px; }
+    .result-btns { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>科目三灯光模拟考试</h1>
+    <p>夜间行驶灯光使用 · 随机抽题练习</p>
+  </div>
+  <div class="body">
+    <div class="start-view" id="startView">
+      <div class="start-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 2L4 7v6c0 5 3.5 9.5 8 11 4.5-1.5 8-6 8-11V7l-8-5zm0 4.5a3.5 3.5 0 110 7 3.5 3.5 0 010-7z"/></svg>
+      </div>
+      <div class="start-desc">
+        根据语音提示选择正确的灯光操作<br>
+        共 14 道标准考题，随机抽取练习
+      </div>
+      <div class="mode-select">
+        <div class="mode-label">选择题量：</div>
+        <div class="mode-btns">
+          <button class="mode-btn active" data-count="5">
+            <span class="num">5</span>快速练习
+          </button>
+          <button class="mode-btn" data-count="10">
+            <span class="num">10</span>标准测试
+          </button>
+          <button class="mode-btn" data-count="14">
+            <span class="num">14</span>全部题目
+          </button>
+        </div>
+      </div>
+      <div class="voice-toggle active" id="voiceToggle" onclick="toggleVoice()">
+        <span class="voice-toggle-label">🔊 语音播报题目</span>
+        <div class="voice-switch"></div>
+      </div>
+      <button class="primary-btn" onclick="startQuiz()">开始考试</button>
+    </div>
+    <div class="quiz-view" id="quizView">
+      <div class="progress-bar">
+        <span class="progress-text">第 <b id="currentNum">1</b> / <span id="totalNum">5</span> 题</span>
+        <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+        <span class="score-badge" id="scoreBadge">0 分</span>
+      </div>
+      <div class="question-card">
+        <div class="countdown-badge" id="countdownBadge">5</div>
+        <div class="question-tag">语音指令</div>
+        <div class="question-text" id="questionText">请开启前照灯</div>
+      </div>
+      <div class="options" id="optionsBox"></div>
+      <div class="feedback" id="feedback">
+        <div class="feedback-title" id="feedbackTitle"></div>
+        <div class="feedback-answer" id="feedbackAnswer"></div>
+      </div>
+    </div>
+    <div class="result-view" id="resultView">
+      <div class="result-label">本次考试得分</div>
+      <div class="result-score" id="resultScore">0</div>
+      <div class="result-stats">
+        <div class="stat-card">
+          <div class="stat-num green" id="statCorrect">0</div>
+          <div class="stat-label">答对</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num red" id="statWrong">0</div>
+          <div class="stat-label">答错</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num blue" id="statRate">0%</div>
+          <div class="stat-label">正确率</div>
+        </div>
+      </div>
+      <div class="result-msg" id="resultMsg"></div>
+      <div class="wrong-list" id="wrongList">
+        <div class="wrong-list-title">错题回顾</div>
+        <div id="wrongItems"></div>
+      </div>
+      <div class="result-btns">
+        <button class="primary-btn" onclick="restart()">再考一次</button>
+        <button class="secondary-btn" onclick="backToStart()">返回首页</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+const QUESTIONS = [
+  { q: "请开启前照灯", a: "近光灯", tip: "开启前照灯，近光或远光均可，通常先开近光灯" },
+  { q: "通过急弯", a: "远近光交替", tip: "交替使用远近光灯（双闪）示意" },
+  { q: "通过坡路", a: "远近光交替", tip: "交替使用远近光灯（双闪）示意" },
+  { q: "通过拱桥", a: "远近光交替", tip: "交替使用远近光灯（双闪）示意" },
+  { q: "通过人行横道", a: "远近光交替", tip: "交替使用远近光灯（双闪）示意" },
+  { q: "通过没有交通信号灯控制的路口", a: "远近光交替", tip: "交替使用远近光灯（双闪）示意" },
+  { q: "超越前方车辆", a: "远近光交替", tip: "交替使用远近光灯（双闪）示意超车" },
+  { q: "会车", a: "近光灯", tip: "使用近光灯，不得使用远光灯" },
+  { q: "同方向近距离跟车行驶", a: "近光灯", tip: "使用近光灯，避免远光晃前车" },
+  { q: "在有信号灯控制的路口转弯", a: "近光灯", tip: "使用近光灯" },
+  { q: "在有路灯照明良好的道路上行驶", a: "近光灯", tip: "照明良好，使用近光灯" },
+  { q: "在无照明的道路上行驶", a: "远光灯", tip: "无照明道路，使用远光灯" },
+  { q: "在照明不良的道路上行驶", a: "远光灯", tip: "照明不良，使用远光灯" },
+  { q: "路边临时停车", a: "示廓灯+危险报警闪光灯", tip: "开启示廓灯和危险报警闪光灯（双闪灯）" }
+];
+const OPTIONS = [
+  { label: "近光灯", icon: "💡" },
+  { label: "远光灯", icon: "🔦" },
+  { label: "远近光交替", icon: "✨" },
+  { label: "示廓灯+危险报警闪光灯", icon: "⚠️" }
+];
+let quizCount = 5;
+let currentQuestions = [];
+let currentIndex = 0;
+let score = 0;
+let wrongRecords = [];
+let answered = false;
+let voiceEnabled = true;
+let countdownTimer = null;
+let countdownValue = 5;
+let autoNextTimer = null;
+function toggleVoice() {
+  voiceEnabled = !voiceEnabled;
+  document.getElementById('voiceToggle').classList.toggle('active', voiceEnabled);
+  if (!voiceEnabled) speechSynthesis.cancel();
+}
+function speak(text, onEnd) {
+  if (!voiceEnabled) {
+    if (onEnd) setTimeout(onEnd, 100);
+    return;
+  }
+  speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = 'zh-CN';
+  utter.rate = 0.9;
+  let ended = false;
+  const finish = () => {
+    if (ended) return;
+    ended = true;
+    if (onEnd) onEnd();
+  };
+  utter.onend = finish;
+  utter.onerror = finish;
+  speechSynthesis.speak(utter);
+  const estimated = Math.min(text.length * 220 + 500, 5000);
+  setTimeout(finish, estimated);
+}
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    quizCount = parseInt(btn.dataset.count);
+  });
+});
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function clearAllTimers() {
+  if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
+  if (autoNextTimer) { clearTimeout(autoNextTimer); autoNextTimer = null; }
+}
+function startCountdown() {
+  countdownValue = 5;
+  updateCountdownDisplay();
+  countdownTimer = setInterval(() => {
+    countdownValue--;
+    updateCountdownDisplay();
+    if (countdownValue <= 0) {
+      clearInterval(countdownTimer);
+      countdownTimer = null;
+      timeoutAnswer();
+    }
+  }, 1000);
+}
+function updateCountdownDisplay() {
+  const badge = document.getElementById('countdownBadge');
+  badge.textContent = countdownValue;
+  badge.classList.toggle('urgent', countdownValue <= 2);
+}
+function scheduleAutoNext() {
+  if (autoNextTimer) clearTimeout(autoNextTimer);
+  autoNextTimer = setTimeout(() => {
+    autoNextTimer = null;
+    nextQuestion();
+  }, 1800);
+}
+function startQuiz() {
+  clearAllTimers();
+  speechSynthesis.cancel();
+  currentQuestions = shuffle(QUESTIONS).slice(0, quizCount);
+  currentIndex = 0;
+  score = 0;
+  wrongRecords = [];
+  document.getElementById('startView').style.display = 'none';
+  document.getElementById('resultView').style.display = 'none';
+  document.getElementById('quizView').style.display = 'block';
+  document.getElementById('totalNum').textContent = quizCount;
+  renderQuestion();
+}
+function renderQuestion() {
+  answered = false;
+  clearAllTimers();
+  const q = currentQuestions[currentIndex];
+  document.getElementById('currentNum').textContent = currentIndex + 1;
+  document.getElementById('questionText').textContent = q.q;
+  document.getElementById('progressFill').style.width = ((currentIndex) / quizCount * 100) + '%';
+  document.getElementById('scoreBadge').textContent = score + ' 分';
+  document.getElementById('feedback').classList.remove('show', 'correct', 'wrong');
+  const box = document.getElementById('optionsBox');
+  box.innerHTML = '';
+  OPTIONS.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.innerHTML = `<span class="opt-icon">${opt.icon}</span><span>${opt.label}</span>`;
+    btn.onclick = () => selectAnswer(opt.label, btn);
+    box.appendChild(btn);
+  });
+  speak(q.q, () => {
+    startCountdown();
+  });
+}
+function selectAnswer(answer, btnEl) {
+  if (answered) return;
+  answered = true;
+  clearAllTimers();
+  speechSynthesis.cancel();
+  const q = currentQuestions[currentIndex];
+  const isCorrect = answer === q.a;
+  const allBtns = document.querySelectorAll('.option-btn');
+  allBtns.forEach(b => {
+    b.disabled = true;
+    const label = b.querySelector('span:last-child').textContent;
+    if (label === q.a) {
+      b.classList.add('correct');
+    } else if (b === btnEl && !isCorrect) {
+      b.classList.add('wrong');
+    } else {
+      b.classList.add('dimmed');
+    }
+  });
+  const fb = document.getElementById('feedback');
+  const fbTitle = document.getElementById('feedbackTitle');
+  const fbAnswer = document.getElementById('feedbackAnswer');
+  if (isCorrect) {
+    score += 10;
+    fb.classList.add('correct', 'show');
+    fbTitle.textContent = '✓ 回答正确';
+    fbAnswer.textContent = q.tip;
+  } else {
+    wrongRecords.push({ q: q.q, userAns: answer, correctAns: q.a, tip: q.tip });
+    fb.classList.add('wrong', 'show');
+    fbTitle.textContent = '✗ 回答错误';
+    fbAnswer.innerHTML = `正确答案：<b>${q.a}</b><br>${q.tip}`;
+  }
+  document.getElementById('scoreBadge').textContent = score + ' 分';
+  scheduleAutoNext();
+}
+function timeoutAnswer() {
+  if (answered) return;
+  answered = true;
+  speechSynthesis.cancel();
+  const q = currentQuestions[currentIndex];
+  const allBtns = document.querySelectorAll('.option-btn');
+  allBtns.forEach(b => {
+    b.disabled = true;
+    const label = b.querySelector('span:last-child').textContent;
+    if (label === q.a) {
+      b.classList.add('correct');
+    } else {
+      b.classList.add('dimmed');
+    }
+  });
+  wrongRecords.push({ q: q.q, userAns: '超时未答', correctAns: q.a, tip: q.tip });
+  const fb = document.getElementById('feedback');
+  fb.classList.add('wrong', 'show');
+  document.getElementById('feedbackTitle').textContent = '⏱ 超时未答';
+  document.getElementById('feedbackAnswer').innerHTML = `正确答案：<b>${q.a}</b><br>${q.tip}`;
+  scheduleAutoNext();
+}
+function nextQuestion() {
+  if (currentIndex < quizCount - 1) {
+    currentIndex++;
+    renderQuestion();
+  } else {
+    showResult();
+  }
+}
+function showResult() {
+  clearAllTimers();
+  speechSynthesis.cancel();
+  document.getElementById('quizView').style.display = 'none';
+  document.getElementById('resultView').style.display = 'block';
+  document.getElementById('resultScore').textContent = score;
+  document.getElementById('statCorrect').textContent = quizCount - wrongRecords.length;
+  document.getElementById('statWrong').textContent = wrongRecords.length;
+  document.getElementById('statRate').textContent = Math.round((quizCount - wrongRecords.length) / quizCount * 100) + '%';
+  const msg = document.getElementById('resultMsg');
+  if (score === quizCount * 10) {
+    msg.textContent = '🎉 满分通过！灯光操作已完全掌握，可以放心上考场了！';
+  } else if (score >= quizCount * 8) {
+    msg.textContent = '👍 表现不错！再巩固一下错题，考试没问题。';
+  } else if (score >= quizCount * 6) {
+    msg.textContent = '⚠️ 还需加强练习，重点复习错题中的灯光操作。';
+  } else {
+    msg.textContent = '📖 基础还不够扎实，建议先背熟灯光操作口诀再练习。';
+  }
+  const wrongList = document.getElementById('wrongList');
+  const wrongItems = document.getElementById('wrongItems');
+  if (wrongRecords.length > 0) {
+    wrongList.classList.add('show');
+    wrongItems.innerHTML = wrongRecords.map(w => `
+      <div class="wrong-item">
+        <div class="wrong-q">${w.q}</div>
+        <div class="wrong-ans">
+          你的答案：<span class="user-ans">${w.userAns}</span> → 正确答案：<span>${w.correctAns}</span><br>
+          ${w.tip}
+        </div>
+      </div>
+    `).join('');
+  } else {
+    wrongList.classList.remove('show');
+  }
+}
+function restart() {
+  startQuiz();
+}
+function backToStart() {
+  clearAllTimers();
+  speechSynthesis.cancel();
+  document.getElementById('resultView').style.display = 'none';
+  document.getElementById('startView').style.display = 'block';
+}
+</script>
+</body>
+</html>
